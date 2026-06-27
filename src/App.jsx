@@ -21,11 +21,22 @@ const App = () => {
 
     audio.loop = true
     audio.volume = 0.35
+    audio.preload = 'auto'
 
-    const handleCanPlay = () => setAudioReady(true)
+    const handleCanPlay = () => {
+      setAudioReady(true)
+      if (!audioStarted && !audioError) {
+        void tryPlay()
+      }
+    }
     const handleError = () => setAudioError(true)
+    const handlePlay = () => setAudioStarted(true)
+    const handlePause = () => setAudioStarted(false)
 
     audio.addEventListener('canplaythrough', handleCanPlay)
+    audio.addEventListener('loadedmetadata', handleCanPlay)
+    audio.addEventListener('play', handlePlay)
+    audio.addEventListener('pause', handlePause)
     audio.addEventListener('error', handleError)
 
     const tryPlay = async () => {
@@ -35,23 +46,38 @@ const App = () => {
         await audio.play()
         setAudioStarted(true)
       } catch (error) {
-        // Autoplay can be blocked until the user interacts.
+        window.setTimeout(() => {
+          if (!audioStarted && !audioError) {
+            void tryPlay()
+          }
+        }, 400)
       }
     }
 
-    tryPlay()
-    window.addEventListener('click', tryPlay, { once: true })
-    window.addEventListener('keydown', tryPlay, { once: true })
-    window.addEventListener('touchstart', tryPlay, { once: true })
-    window.addEventListener('pointerdown', tryPlay, { once: true })
+    const startPlayback = () => {
+      window.setTimeout(() => {
+        void tryPlay()
+      }, 300)
+    }
+
+    startPlayback()
+    window.addEventListener('load', startPlayback)
+    window.addEventListener('click', startPlayback, { once: true })
+    window.addEventListener('keydown', startPlayback, { once: true })
+    window.addEventListener('touchstart', startPlayback, { once: true })
+    window.addEventListener('pointerdown', startPlayback, { once: true })
 
     return () => {
       audio.removeEventListener('canplaythrough', handleCanPlay)
+      audio.removeEventListener('loadedmetadata', handleCanPlay)
+      audio.removeEventListener('play', handlePlay)
+      audio.removeEventListener('pause', handlePause)
       audio.removeEventListener('error', handleError)
-      window.removeEventListener('click', tryPlay)
-      window.removeEventListener('keydown', tryPlay)
-      window.removeEventListener('touchstart', tryPlay)
-      window.removeEventListener('pointerdown', tryPlay)
+      window.removeEventListener('load', startPlayback)
+      window.removeEventListener('click', startPlayback)
+      window.removeEventListener('keydown', startPlayback)
+      window.removeEventListener('touchstart', startPlayback)
+      window.removeEventListener('pointerdown', startPlayback)
     }
   }, [audioStarted, audioError])
 
@@ -111,6 +137,8 @@ const App = () => {
         ref={audioRef}
         src="/assets/A_Thousand_Years_-_Christina_Perri.mp3"
         preload="auto"
+        autoPlay
+        playsInline
       />
       <button
         className="audio-toggle"
