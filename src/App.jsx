@@ -30,9 +30,17 @@ const App = () => {
         void tryPlay()
       }
     }
-    const handleError = () => setAudioError(true)
-    const handlePlay = () => setAudioStarted(true)
-    const handlePause = () => setAudioStarted(false)
+    const handleError = () => {
+      setAudioError(true)
+      setAudioStarted(false)
+    }
+    const handlePlay = () => {
+      setAudioError(false)
+      setAudioStarted(true)
+    }
+    const handlePause = () => {
+      setAudioStarted(false)
+    }
 
     audio.addEventListener('canplaythrough', handleCanPlay)
     audio.addEventListener('loadedmetadata', handleCanPlay)
@@ -45,6 +53,7 @@ const App = () => {
       try {
         audio.currentTime = 0
         await audio.play()
+        setAudioError(false)
         setAudioStarted(true)
       } catch (error) {
         setAudioError(true)
@@ -77,6 +86,7 @@ const App = () => {
       } else {
         audio.currentTime = 0
         await audio.play()
+        setAudioError(false)
         setAudioStarted(true)
       }
     } catch (error) {
