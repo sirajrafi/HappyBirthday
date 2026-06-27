@@ -14,6 +14,7 @@ const App = () => {
   const [audioStarted, setAudioStarted] = useState(false)
   const [audioReady, setAudioReady] = useState(false)
   const [audioError, setAudioError] = useState(false)
+  const [showStartOverlay, setShowStartOverlay] = useState(true)
 
   useEffect(() => {
     const audio = audioRef.current
@@ -46,26 +47,9 @@ const App = () => {
         await audio.play()
         setAudioStarted(true)
       } catch (error) {
-        window.setTimeout(() => {
-          if (!audioStarted && !audioError) {
-            void tryPlay()
-          }
-        }, 400)
+        setAudioError(true)
       }
     }
-
-    const startPlayback = () => {
-      window.setTimeout(() => {
-        void tryPlay()
-      }, 300)
-    }
-
-    startPlayback()
-    window.addEventListener('load', startPlayback)
-    window.addEventListener('click', startPlayback, { once: true })
-    window.addEventListener('keydown', startPlayback, { once: true })
-    window.addEventListener('touchstart', startPlayback, { once: true })
-    window.addEventListener('pointerdown', startPlayback, { once: true })
 
     return () => {
       audio.removeEventListener('canplaythrough', handleCanPlay)
@@ -73,13 +57,14 @@ const App = () => {
       audio.removeEventListener('play', handlePlay)
       audio.removeEventListener('pause', handlePause)
       audio.removeEventListener('error', handleError)
-      window.removeEventListener('load', startPlayback)
-      window.removeEventListener('click', startPlayback)
-      window.removeEventListener('keydown', startPlayback)
-      window.removeEventListener('touchstart', startPlayback)
-      window.removeEventListener('pointerdown', startPlayback)
     }
   }, [audioStarted, audioError])
+
+  useEffect(() => {
+    if (audioStarted) {
+      setShowStartOverlay(false)
+    }
+  }, [audioStarted])
 
   const toggleAudio = async () => {
     const audio = audioRef.current
@@ -97,6 +82,11 @@ const App = () => {
     } catch (error) {
       setAudioError(true)
     }
+  }
+
+  const handleStartExperience = async () => {
+    setShowStartOverlay(false)
+    await toggleAudio()
   }
 
   const MyRoute = createBrowserRouter(createRoutesFromElements(
@@ -133,6 +123,79 @@ const App = () => {
 
   return (
     <>
+      {showStartOverlay && (
+        <div
+          onClick={handleStartExperience}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 10000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'radial-gradient(circle at top, rgba(255,221,240,0.95), rgba(255,184,214,0.82) 35%, rgba(132,90,160,0.86))',
+            backdropFilter: 'blur(8px)',
+            padding: '1.5rem',
+            overflow: 'hidden',
+          }}
+        >
+          {['♥', '✦', '✧', '❀'].map((icon, index) => (
+            <span
+              key={icon + index}
+              style={{
+                position: 'absolute',
+                left: `${10 + index * 20}%`,
+                top: `${12 + (index % 3) * 18}%`,
+                fontSize: `${1.1 + (index % 3) * 0.4}rem`,
+                color: index % 2 === 0 ? '#fff8fd' : '#ffd6e8',
+                opacity: 0.8,
+                animation: `floatSparkle ${3.5 + index * 0.4}s ease-in-out infinite`,
+                pointerEvents: 'none',
+              }}
+            >
+              {icon}
+            </span>
+          ))}
+          <div
+            style={{
+              maxWidth: '34rem',
+              width: '100%',
+              textAlign: 'center',
+              padding: '2rem 1.5rem',
+              borderRadius: '2rem',
+              background: 'rgba(255,255,255,0.28)',
+              border: '1px solid rgba(255,255,255,0.45)',
+              boxShadow: '0 25px 60px rgba(88, 35, 92, 0.28)',
+              backdropFilter: 'blur(16px)',
+            }}
+          >
+            <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>✨</div>
+            <h2 style={{ margin: '0 0 0.6rem', fontSize: 'clamp(1.6rem, 3vw, 2.2rem)', color: '#fff8fd', textShadow: '0 2px 10px rgba(0,0,0,0.18)' }}>
+              Happy Birthday, My Love
+            </h2>
+            <p style={{ margin: '0 0 1.2rem', fontSize: '1rem', lineHeight: 1.6, color: '#fff8fd', opacity: 0.95 }}>
+              Tap below to begin this little magical moment with music, soft lights, and your sweetest memories.
+            </p>
+            <button
+              type="button"
+              onClick={handleStartExperience}
+              style={{
+                padding: '0.95rem 1.6rem',
+                borderRadius: '999px',
+                border: 'none',
+                background: 'linear-gradient(135deg, #ffffff 0%, #ffd7eb 55%, #ffc4de 100%)',
+                color: '#8a2f62',
+                fontWeight: 800,
+                cursor: 'pointer',
+                boxShadow: '0 10px 24px rgba(255, 120, 180, 0.3)',
+                fontSize: '1rem',
+              }}
+            >
+              Open the surprise ✨
+            </button>
+          </div>
+        </div>
+      )}
       <audio
         ref={audioRef}
         src="/assets/A_Thousand_Years_-_Christina_Perri.mp3"
